@@ -1,0 +1,62 @@
+;
+; kernel-banana.inf
+;
+
+[Version]
+Signature   = "$WINDOWS NT$"
+Class       = System ; TODO: specify appropriate Class
+ClassGuid   = {4d36e97d-e325-11ce-bfc1-08002be10318} ; TODO: specify appropriate ClassGuid
+Provider    = %ManufacturerName%
+CatalogFile = kernel-banana.cat
+DriverVer   = ; TODO: set DriverVer in stampinf property pages
+PnpLockdown = 1
+
+[DestinationDirs]
+DefaultDestDir = 13
+
+[SourceDisksNames]
+1 = %DiskName%,,,""
+
+[SourceDisksFiles]
+kernel-banana.sys = 1,,
+
+;*****************************************
+; Install Section
+;*****************************************
+
+[Manufacturer]
+%ManufacturerName% = Standard,NT$ARCH$.10.0...16299 ; %13% support introduced in build 16299
+
+[Standard.NT$ARCH$.10.0...16299]
+%kernel-banana.DeviceDesc% = kernel-banana_Device, Root\kernel-banana ; TODO: edit hw-id
+
+[kernel-banana_Device.NT]
+CopyFiles = File_Copy
+
+[File_Copy]
+kernel-banana.sys
+
+;-------------- Service installation
+[kernel-banana_Device.NT.Services]
+AddService = kernel-banana,%SPSVCINST_ASSOCSERVICE%, kernel-banana_Service_Inst
+
+; -------------- kernel-banana driver install sections
+[kernel-banana_Service_Inst]
+DisplayName    = %kernel-banana.SVCDESC%
+ServiceType    = 1               ; SERVICE_KERNEL_DRIVER
+StartType      = 3               ; SERVICE_DEMAND_START
+ErrorControl   = 1               ; SERVICE_ERROR_NORMAL
+ServiceBinary  = %13%\kernel-banana.sys
+
+[kernel-banana_Device.NT.Wdf]
+KmdfService = kernel-banana, kernel-banana_wdfsect
+
+[kernel-banana_wdfsect]
+KmdfLibraryVersion = $KMDFVERSION$
+
+[Strings]
+SPSVCINST_ASSOCSERVICE = 0x00000002
+ManufacturerName = "<Your manufacturer name>" ;TODO: Replace with your manufacturer name
+DiskName = "kernel-banana Installation Disk"
+kernel-banana.DeviceDesc = "kernel-banana Device"
+kernel-banana.SVCDESC = "kernel-banana Service"
