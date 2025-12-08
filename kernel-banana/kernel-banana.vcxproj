@@ -74,12 +74,12 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
     <OutDir>$(SolutionDir)build\</OutDir>
-    <IntDir>$(SolutionDir)build\km_intermediates</IntDir>
+    <IntDir>$(SolutionDir)build\km_intermediates\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
     <OutDir>$(SolutionDir)build\</OutDir>
-    <IntDir>$(SolutionDir)build\km_intermediates</IntDir>
+    <IntDir>$(SolutionDir)build\km_intermediates\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>

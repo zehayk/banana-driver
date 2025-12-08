@@ -1,9 +1,13 @@
+/*
+Old main, when project was application.exe and not a dll.
+*/
+
 #include <iostream>
 #include <Windows.h>
 #include <TlHelp32.h>
-#include "client_dll.hpp"
-#include "offsets.hpp"
-#include "buttons.hpp"
+#include "cs2_dump\client_dll.hpp"
+#include "cs2_dump\offsets.hpp"
+#include "cs2_dump\buttons.hpp"
 
 using namespace cs2_dumper;
 using namespace cs2_dumper::schemas::client_dll;
