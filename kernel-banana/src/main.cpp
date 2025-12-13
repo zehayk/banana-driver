@@ -7,8 +7,6 @@ extern "C" {
 											PEPROCESS TargetProcess, PVOID TargetrAddress,
 											SIZE_T BufferSize, KPROCESSOR_MODE PreviousMode,
 											PSIZE_T ReturnSize);
-
-
 }
 
 void debug_print(PCSTR text) {
@@ -42,6 +40,8 @@ namespace driver {
 		SIZE_T return_size;
 	};
 
+	static PEPROCESS target_process = nullptr;
+
 	NTSTATUS create(PDEVICE_OBJECT device_object, PIRP irp) {
 		UNREFERENCED_PARAMETER(device_object);
 
@@ -51,6 +51,8 @@ namespace driver {
 	}
 
 	NTSTATUS close(PDEVICE_OBJECT device_object, PIRP irp) {
+		//target_process = nullptr;
+
 		UNREFERENCED_PARAMETER(device_object);
 
 		IoCompleteRequest(irp, IO_NO_INCREMENT);
@@ -78,7 +80,7 @@ namespace driver {
 		}
 
 		// target process to read/write memory from
-		static PEPROCESS target_process = nullptr;
+		//static PEPROCESS target_process = nullptr;
 		const ULONG control_code = stack_irp->Parameters.DeviceIoControl.IoControlCode;
 		switch (control_code) {
 			case codes::attach:

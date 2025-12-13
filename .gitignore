@@ -1,2 +1,4 @@
 /.vs
 /build
+external_overlay/imgui.ini
+mapper+injector.zip

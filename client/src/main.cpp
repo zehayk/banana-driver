@@ -169,11 +169,11 @@ int main() {
                 // idk where the magic numbers come from. Youtube guy didn't explain
                 if (space_pressed && in_air) {
                     Sleep(5); // 5ms
-                    driver::write_memory(driver, client + buttons::jump, 65537);
+                    /*driver::write_memory(driver, client + buttons::jump, 65537);
                 } else if (space_pressed && !in_air) {
                     driver::write_memory(driver, client + buttons::jump, 256);
                 } else if (!space_pressed && force_jump == 65537) {
-                    driver::write_memory(driver, client + buttons::jump, 256);
+                    driver::write_memory(driver, client + buttons::jump, 256);*/
                 }
             }
         }

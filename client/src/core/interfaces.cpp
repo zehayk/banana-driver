@@ -74,20 +74,20 @@ namespace interfaces {
 	}
 
 	void create() {
-		{
-			// this pattern scanning for "csgo input pointer"
-			// if outdated, just search for "CSGOInput" in ida, it will be above, in the form "mov  rcx, cs:qword_18201F520"
-			std::uint8_t* address = sdk::find_pattern("client.dll", "48 8B 0D ? ? ? ? 4C 8D 8F ? ? ? ? 45 33 F6");
+		//{
+		//	// this pattern scanning for "csgo input pointer"
+		//	// if outdated, just search for "CSGOInput" in ida, it will be above, in the form "mov  rcx, cs:qword_18201F520"
+		//	std::uint8_t* address = sdk::find_pattern("client.dll", "48 8B 0D ? ? ? ? 4C 8D 8F ? ? ? ? 45 33 F6");
 
-			csgo_input = *reinterpret_cast<sdk::interface_csgo_input**>(
-				sdk::resolve_absolute_rip_address(address, 3, 7)); // 3 = size of "mov", 7 = size of whole instruction
+		//	csgo_input = *reinterpret_cast<sdk::interface_csgo_input**>(
+		//		sdk::resolve_absolute_rip_address(address, 3, 7)); // 3 = size of "mov", 7 = size of whole instruction
 
-			if (csgo_input == nullptr) {
-				throw std::runtime_error("Failed to capture interface_csgo_input.");
-			}
-		}
+		//	if (csgo_input == nullptr) {
+		//		throw std::runtime_error("Failed to capture interface_csgo_input.");
+		//	}
+		//}
 
-		input_system = capture_interface<sdk::interface_input_system>("inputsystem.dll", "InputSystemVersion001");
+		//input_system = capture_interface<sdk::interface_input_system>("inputsystem.dll", "InputSystemVersion001");
 
 		create_d3d11_resources();
 	}

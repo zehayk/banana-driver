@@ -1,0 +1,117 @@
+#include "driver_communication.hpp"
+#include <iostream>
+#include <Windows.h>
+#include <TlHelp32.h>
+
+namespace driver_communication {
+    DWORD get_process_id(const wchar_t* process_name) {
+        DWORD process_id = 0;
+
+        HANDLE snap_shot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, NULL);
+        if (snap_shot == INVALID_HANDLE_VALUE)
+            return process_id;
+
+        PROCESSENTRY32W entry = { 0 };
+        entry.dwSize = sizeof(decltype(entry));
+
+        if (Process32FirstW(snap_shot, &entry) == TRUE) {
+            // Check if the first handle is the one we want.
+            if (_wcsicmp(process_name, entry.szExeFile) == 0)
+                process_id = entry.th32ProcessID;
+            else {
+                while (Process32NextW(snap_shot, &entry) == TRUE) {
+                    if (_wcsicmp(process_name, entry.szExeFile) == 0) {
+                        process_id = entry.th32ProcessID;
+                        break;
+                    }
+                }
+            }
+        }
+
+        CloseHandle(snap_shot);
+        return process_id;
+    }
+
+    std::uintptr_t get_module_base(const DWORD pid, const wchar_t* module_name) {
+        std::uintptr_t module_base = 0;
+
+        // Snapshot of process' modules (dlls).
+        HANDLE snap_shot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, pid);
+        if (snap_shot == INVALID_HANDLE_VALUE)
+            return module_base;
+
+        MODULEENTRY32W entry = {};
+        entry.dwSize = sizeof(decltype(entry));
+
+        if (Module32FirstW(snap_shot, &entry) == TRUE) {
+            if (wcsstr(module_name, entry.szModule) != nullptr)
+                module_base = reinterpret_cast<std::uintptr_t>(entry.modBaseAddr);
+            else {
+                while (Module32NextW(snap_shot, &entry) == TRUE) {
+                    if (wcsstr(module_name, entry.szModule) != nullptr) {
+                        module_base = reinterpret_cast<std::uintptr_t>(entry.modBaseAddr);
+                        break;
+                    }
+                }
+            }
+        }
+
+        CloseHandle(snap_shot);
+        return module_base;
+    }
+
+    namespace driver {
+        bool attach_to_process(HANDLE driver_handle, const DWORD pid) {
+            Request r;
+            r.process_id = reinterpret_cast<HANDLE>(pid);
+
+            return DeviceIoControl(driver_handle, codes::attach, &r, sizeof(r), &r, sizeof(r), nullptr, nullptr);
+        }
+    }
+	
+    bool coonnected_to_cs2_process = false;
+    HANDLE driver_handle = nullptr;
+    DWORD pid = 0;
+
+    /*static void monitor_cs2_process_connection() {
+        WaitForSingleObject(h, INFINITE);
+    }*/
+
+	void initialize_driver_communication() {
+		//const HANDLE driver = CreateFile(L"\\\\.\\banana-driver", GENERIC_READ, 0, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+        driver_handle = CreateFile(L"\\\\.\\banana-driver", GENERIC_READ, 0, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+		if (driver_handle == INVALID_HANDLE_VALUE) {
+			std::cout << "Failed to create driver handle.\n";
+			std::cin.get();
+			return;
+		}
+
+		while (true) {
+			pid = get_process_id(L"cs2.exe");
+			if (pid != 0) {
+				break;  // found process
+			}
+		}
+
+        if (driver::attach_to_process(driver_handle, pid) == true) {
+			std::cout << "Attachment to cs2.exe successful.\n";
+            coonnected_to_cs2_process = true;
+            // start process monitoring thead in the future
+        }
+	}
+	void shutdown_driver_communication() {
+		if (driver_handle) {
+			CloseHandle(driver_handle);
+			driver_handle = nullptr;
+		}
+	}
+    bool process_connected_to_cs2() {
+        return coonnected_to_cs2_process;
+	}
+	HANDLE get_driver_handle() {
+		return driver_handle;
+	}
+    DWORD get_target_pid() {
+        return pid;
+	}
+}
