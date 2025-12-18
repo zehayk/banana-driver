@@ -155,7 +155,11 @@ NTSTATUS driver_main(PDRIVER_OBJECT driver_object, PUNICODE_STRING registry_path
 }
 
 // KdMapper calls the entry point but params will be null
-NTSTATUS DriverEntry() {
+NTSTATUS DriverEntry(uintptr_t mappedImageBase, size_t mappedImageSize) {
+	//debug_print("[+] Mapped [%p] w/ Size [0x%x]\n", mappedImageBase, mappedImageSize);
+	UNREFERENCED_PARAMETER(mappedImageBase);
+	UNREFERENCED_PARAMETER(mappedImageSize);
+
 	debug_print("[+] fucky driver\n");
 
 	UNICODE_STRING driver_name = {};
