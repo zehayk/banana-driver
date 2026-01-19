@@ -155,12 +155,15 @@ NTSTATUS driver_main(PDRIVER_OBJECT driver_object, PUNICODE_STRING registry_path
 }
 
 // KdMapper calls the entry point but params will be null
-NTSTATUS DriverEntry(uintptr_t mappedImageBase, size_t mappedImageSize) {
+//extern "C" NTSTATUS DriverEntry(uintptr_t mappedImageBase, size_t mappedImageSize) {
+NTSTATUS DriverEntry() {
 	//debug_print("[+] Mapped [%p] w/ Size [0x%x]\n", mappedImageBase, mappedImageSize);
-	UNREFERENCED_PARAMETER(mappedImageBase);
-	UNREFERENCED_PARAMETER(mappedImageSize);
+	//UNREFERENCED_PARAMETER(mappedImageBase);
+	//UNREFERENCED_PARAMETER(mappedImageSize);
 
 	debug_print("[+] fucky driver\n");
+
+	//return STATUS_SUCCESS;
 
 	UNICODE_STRING driver_name = {};
 	RtlInitUnicodeString(&driver_name, L"\\Driver\\banana-driver");

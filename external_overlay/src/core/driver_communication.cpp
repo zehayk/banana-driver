@@ -3,6 +3,7 @@
 #include <Windows.h>
 #include <TlHelp32.h>
 
+// TODO: Rename this to "IOCTL coms" or something, *later*
 namespace driver_communication {
     DWORD get_process_id(const wchar_t* process_name) {
         DWORD process_id = 0;
@@ -67,6 +68,15 @@ namespace driver_communication {
 
             return DeviceIoControl(driver_handle, codes::attach, &r, sizeof(r), &r, sizeof(r), nullptr, nullptr);
         }
+
+        void read_memory_char(HANDLE driver_handle, const std::uintptr_t addr, char (*buffer_ptr)[]) {
+            Request r;
+            r.target = reinterpret_cast<PVOID>(addr);
+            r.buffer = &buffer_ptr;
+            r.size = sizeof(buffer_ptr) - 1;
+
+            DeviceIoControl(driver_handle, codes::read, &r, sizeof(r), &r, sizeof(r), nullptr, nullptr);
+        }
     }
 	
     bool coonnected_to_cs2_process = false;
@@ -80,18 +90,19 @@ namespace driver_communication {
 	void initialize_driver_communication() {
 		//const HANDLE driver = CreateFile(L"\\\\.\\banana-driver", GENERIC_READ, 0, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
         driver_handle = CreateFile(L"\\\\.\\banana-driver", GENERIC_READ, 0, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+        //driver_handle = CreateFile(L"\\\\.\\mlx4_bus", GENERIC_READ, 0, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 		if (driver_handle == INVALID_HANDLE_VALUE) {
 			std::cout << "Failed to create driver handle.\n";
 			std::cin.get();
 			return;
 		}
 
-		while (true) {
+		//while (true) {  TODO: DONT FORGET TO UNCOMMENT THIS LATER
 			pid = get_process_id(L"cs2.exe");
-			if (pid != 0) {
-				break;  // found process
-			}
-		}
+			//if (pid != 0) {
+			//	break;  // found process
+			//}
+		//}
 
         if (driver::attach_to_process(driver_handle, pid) == true) {
 			std::cout << "Attachment to cs2.exe successful.\n";

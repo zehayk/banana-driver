@@ -20,6 +20,7 @@
 #include "features/esp.hpp"
 
 #include "globals.hpp"
+#include <windowsx.h>
 
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -57,6 +58,24 @@ LRESULT CALLBACK window_procedure(HWND window, UINT message, WPARAM w_param, LPA
 		return 0L;
 	}
 
+	switch (message)
+	{
+		case WM_NCHITTEST:
+		{
+			const LONG bordderWidth = GetSystemMetrics(SM_CXSIZEFRAME);
+			const LONG titleBarHeight = GetSystemMetrics(SM_CYCAPTION);
+			POINT cursorPos = { GET_X_LPARAM(w_param), GET_Y_LPARAM(l_param) };
+			RECT windowRect;
+			GetWindowRect(window, &windowRect);
+
+			if (cursorPos.y >= windowRect.top && cursorPos.y < windowRect.top + titleBarHeight)
+				return HTCAPTION;
+			break;
+		}
+	default:
+		break;
+	}
+
 	return DefWindowProc(window, message, w_param, l_param);
 }
 
@@ -73,13 +92,10 @@ INT APIENTRY WinMain(HINSTANCE instance, HINSTANCE, PSTR, INT cmd_show) {
 	wc.lpszClassName = L"External Overlay Class";
 	RegisterClassExW(&wc);
 
-	int screen_width = GetSystemMetrics(SM_CXSCREEN);
-	int screen_height = GetSystemMetrics(SM_CYSCREEN);
-
 
 	HWND window = CreateWindowExW(WS_EX_TOPMOST | WS_EX_LAYERED | WS_EX_TRANSPARENT,
 									wc.lpszClassName, L"External Overlay", WS_POPUP,
-								    0, 0, screen_width, screen_height,
+								    0, 0, globals::screenWidth, globals::screenHeight,
 									nullptr, nullptr, wc.hInstance, nullptr);
 
 	SetLayeredWindowAttributes(window, RGB(0, 0, 0), BYTE(255), LWA_ALPHA);
@@ -105,7 +121,7 @@ INT APIENTRY WinMain(HINSTANCE instance, HINSTANCE, PSTR, INT cmd_show) {
 	}
 
 	DXGI_SWAP_CHAIN_DESC sd{};
-	sd.BufferDesc.RefreshRate.Numerator = 60U;
+	sd.BufferDesc.RefreshRate.Numerator = 60U; // fps
 	sd.BufferDesc.RefreshRate.Denominator = 1U;
 	sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	sd.SampleDesc.Count = 1U;
@@ -163,7 +179,7 @@ INT APIENTRY WinMain(HINSTANCE instance, HINSTANCE, PSTR, INT cmd_show) {
 
 	ImGuiIO& io = ImGui::GetIO();
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-	// idk if we need this
+	// idk if we still need this
 
 	ImGui::StyleColorsDark();
 
@@ -181,6 +197,8 @@ INT APIENTRY WinMain(HINSTANCE instance, HINSTANCE, PSTR, INT cmd_show) {
 
 	bool running = true;
 	bool showed_msg = false;
+
+	bool drew = false;
 
 	while (running) {
 		HWND targetWnd = FindWindowW(NULL, L"Counter-Strike 2");  // window class | window title
@@ -214,35 +232,9 @@ INT APIENTRY WinMain(HINSTANCE instance, HINSTANCE, PSTR, INT cmd_show) {
 		}
 
 
-		
-
 		ImGui_ImplDX11_NewFrame();
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
-
-		// --- toggle window click-through based on whether ImGui wants mouse ---
-		// When ImGui wants the mouse (hovering or interacting with UI), remove WS_EX_TRANSPARENT
-		// so the overlay receives mouse events. When ImGui doesn't want the mouse, restore
-		// WS_EX_TRANSPARENT so clicks pass through to the game (background drawings remain non-interactive).
-		/*{
-			ImGuiIO& io = ImGui::GetIO();
-			const bool want_mouse = io.WantCaptureMouse;
-			LONG_PTR ex_style = GetWindowLongPtrW(window, GWL_EXSTYLE);
-
-			if (want_mouse) {
-				if (ex_style & WS_EX_TRANSPARENT) {
-					SetWindowLongPtrW(window, GWL_EXSTYLE, ex_style & ~WS_EX_TRANSPARENT);
-				}
-			}
-			else {
-				if (!(ex_style & WS_EX_TRANSPARENT)) {
-					SetWindowLongPtrW(window, GWL_EXSTYLE, ex_style | WS_EX_TRANSPARENT);
-				}
-			}
-		}*/
-		// -------------------------------------------------------------------
-
-
 
 		LONG_PTR ex_style = GetWindowLongPtrW(window, GWL_EXSTYLE);
 		if (cs2_window_is_foreground && globals::menu_open) {
@@ -252,12 +244,16 @@ INT APIENTRY WinMain(HINSTANCE instance, HINSTANCE, PSTR, INT cmd_show) {
 			//ImGui::GetBackgroundDrawList()->AddCircleFilled({ 500, 500 }, 10.f, ImColor(1.f, 0.f, 0.f));
 
 			// MENU HERE
-			ImGui::Begin("~bananas~");
+			ImGui::Begin("~ banana-cs2 by .zhk_ ~");
 			ImGui::Text("Menu Toggle: key.INSERT");
+			ImGui::Text("Exit		: key.END");
+
+			ImGui::Dummy(ImVec2(0.0f, 20.0f));  // 20px space
 			
-			ImGui::Checkbox("Bunny Hop", &globals::bhop_enabled);
-			ImGui::Checkbox("Glow ESP", &globals::glow_enabled);
-			int* selected = &esp::config::glow_type;
+			//ImGui::Checkbox("Bunny Hop", &globals::bhop_enabled);
+			//ImGui::Checkbox("Glow ESP", &globals::glow_enabled);
+			ImGui::Checkbox("Skeleton ESP", &globals::show_skeleton_esp);
+			/*int* selected = &esp::glow_config::glow_type;
 			const char* items[] = { "never", "when being used", "when being looked at", "constantly" };
 			const int itemCount = IM_ARRAYSIZE(items);
 			if (ImGui::BeginCombo("Select Number", items[*selected]))
@@ -272,21 +268,22 @@ INT APIENTRY WinMain(HINSTANCE instance, HINSTANCE, PSTR, INT cmd_show) {
 						ImGui::SetItemDefaultFocus();
 				}
 				ImGui::EndCombo();
-			}
+			}*/
 
 			ImGui::Dummy(ImVec2(0.0f, 20.0f));  // 20px space
 			std::string info = std::format("Handle: {} | PID: {}", driver_communication::get_driver_handle(), driver_communication::get_target_pid());
 			ImGui::Text("%s", info.c_str());
 
-			ImGui::Dummy(ImVec2(0.0f, 10.0f));  // 20px space
-			std::string num_ge = std::format("Number of Glowing Entities: {}", esp::number_of_glowing_entities);
-			ImGui::Text("%s", num_ge.c_str());
+			//ImGui::Dummy(ImVec2(0.0f, 10.0f));  // 20px space
+			//std::string num_ge = std::format("Number of Glowing Entities: {}", esp::number_of_glowing_entities);
+			//ImGui::Text("%s", num_ge.c_str());
 
 			ImGui::End();
 		} else {
 			SetWindowLongPtrW(window, GWL_EXSTYLE, ex_style | WS_EX_TRANSPARENT);
 		}
-		
+
+		esp::draw_esp(&drew);
 
 		// rendering here
 		ImGui::Render();
@@ -297,9 +294,9 @@ INT APIENTRY WinMain(HINSTANCE instance, HINSTANCE, PSTR, INT cmd_show) {
 
 		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
-		// render with vsync |> for vsync off, use Present(0, 0)
+		// Present(1U, 0U) renders with vsync |> for vsync off, use Present(0, 0)
 		// rendering with vsync off can cause tearing, but overlay will be more responsive
-		swap_chain->Present(1U, 0U);
+		swap_chain->Present(0U, 0U);
 	}
 	// cleanup
 	ImGui_ImplDX11_Shutdown();

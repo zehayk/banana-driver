@@ -30,7 +30,7 @@ namespace driver_communication {
 		template <class T>
 		void write_memory(HANDLE driver_handle, const std::uintptr_t addr, const T& value);*/
 
-		// need to declare templates in header
+		// need templates in header
 		template <class T>
 		T read_memory(HANDLE driver_handle, const std::uintptr_t addr) {
 			T temp = {};
@@ -43,6 +43,8 @@ namespace driver_communication {
 			DeviceIoControl(driver_handle, codes::read, &r, sizeof(r), &r, sizeof(r), nullptr, nullptr);
 			return temp;
 		}
+
+		void read_memory_char(HANDLE driver_handle, const std::uintptr_t addr, char (*buffer_ptr)[]);
 
 		template <class T>
 		void write_memory(HANDLE driver_handle, const std::uintptr_t addr, const T& value) {
